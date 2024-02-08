@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>タイピングゲーム1</title>
+<title>タイピングゲーム</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     text-align: center;
+    transition: background-color 1s ease; /* 背景色の変化を滑らかにする */
   }
   #game-container {
     margin-top: 50px;
@@ -27,6 +28,7 @@
   }
   #score {
     font-size: 20px;
+    margin-bottom: 20px; /* スコア表示の下に余白を追加 */
   }
   #keyboard-container {
     margin-top: 20px;
@@ -51,6 +53,27 @@
   #home-container {
     margin-top: 100px;
   }
+  /* クリア時の背景色 */
+  .clear-background {
+    background-color: lightgreen;
+  }
+  /* ミス時の文字色 */
+  .mistake {
+    color: red;
+  }
+  /* 正解時の文字色 */
+  .correct {
+    color: green;
+  }
+  /* 点滅するアニメーション */
+  @keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .blinking {
+    animation: blink 1s infinite;
+  }
 </style>
 </head>
 <body>
@@ -63,6 +86,8 @@
   <input type="text" id="input-box" placeholder="ここに入力してください">
   <div id="result"></div>
   <div id="score">スコア: 0</div>
+  <!-- リセットボタンをスコア表示の下に移動 -->
+  <button id="reset-button" style="display: none;">リセット</button>
 </div>
 <div id="keyboard-container" style="display: none;">
   <div class="key" id="key-q">q</div>
@@ -104,9 +129,20 @@ const words = ['apple', 'banana', 'orange', 'grape', 'watermelon', 'pineapple', 
 let currentWordIndex = 0;
 let score = 0;
 
+// ランダムな単語を選択して表示する関数
+function selectRandomWord() {
+  const randomIndex = Math.floor(Math.random() * words.length);
+  return words[randomIndex];
+}
+
 // 単語表示を更新する関数
 function updateWordDisplay() {
-  document.getElementById('word-display').textContent = words[currentWordIndex];
+  const randomWord = selectRandomWord();
+  document.getElementById('word-display').textContent = randomWord;
+  document.getElementById('word-display').classList.add('blinking'); // 点滅させる
+  setTimeout(() => {
+    document.getElementById('word-display').classList.remove('blinking'); // 点滅を解除
+  }, 1000); // 1秒後に点滅を解除
 }
 
 // スコアを更新する関数
@@ -128,29 +164,44 @@ function initializeGame() {
 // ゲーム終了時の処理
 function endGame() {
   document.getElementById('result').textContent = 'クリア！おめでとうございます！';
+  document.getElementById('result').classList.add('correct'); // 正解時の文字色を緑に変更
+  document.body.classList.add('clear-background'); // クリア時の背景色を適用
   document.getElementById('input-box').disabled = true;
+  document.getElementById('reset-button').style.display = 'inline-block'; // リセットボタンを表示
 }
 
 // 入力ボックスでEnterキーが押されたときの処理
 document.getElementById('input-box').addEventListener('keypress', function(event) {
   if (event.key === 'Enter') {
     const inputText = document.getElementById('input-box').value.trim();
-    const currentWord = words[currentWordIndex];
+    const currentWord = document.getElementById('word-display').textContent; // ランダムに選択された単語を取得
     if (inputText === currentWord) {
       score++;
       updateScore();
       currentWordIndex++;
-      if (score >= 15) {
+      if (score >= 10) {
         endGame();
-      } else if (currentWordIndex < words.length) {
+      } else {
         updateWordDisplay();
         document.getElementById('input-box').value = '';
       }
       document.getElementById('result').textContent = '正解！次の単語を入力してください';
+      document.getElementById('result').classList.remove('mistake'); // ミス時の文字色をリセット
+      document.getElementById('result').classList.add('correct'); // 正解時の文字色を緑に変更
+      document.getElementById('result').classList.add('blinking'); // 点滅させる
+      setTimeout(() => {
+        document.getElementById('result').classList.remove('blinking'); // 点滅を解除
+      }, 1000); // 1秒後に点滅を解除
     } else {
-      score--;
+      score = Math.max(score - 1, 0); // スコアの最小値を0で固定
       updateScore();
       document.getElementById('result').textContent = 'ミス！もう一度入力してください';
+      document.getElementById('result').classList.remove('correct'); // 正解時の文字色をリセット
+      document.getElementById('result').classList.add('mistake'); // ミス時の文字色を赤に変更
+      document.getElementById('result').classList.add('blinking'); // 点滅させる
+      setTimeout(() => {
+        document.getElementById('result').classList.remove('blinking'); // 点滅を解除
+      }, 1000); // 1秒後に点滅を解除
     }
   }
 });
@@ -176,6 +227,15 @@ document.getElementById('start-button').addEventListener('click', function() {
   document.getElementById('game-container').style.display = 'block';
   document.getElementById('keyboard-container').style.display = 'block';
   initializeGame();
+});
+
+// リセットボタンがクリックされたときの処理
+document.getElementById('reset-button').addEventListener('click', function() {
+  document.getElementById('reset-button').style.display = 'none'; // リセットボタンを非表示
+  document.getElementById('result').textContent = ''; // 結果メッセージをクリア
+  document.body.classList.remove('clear-background'); // 背景色をリセット
+  document.getElementById('input-box').disabled = false; // 入力ボックスを有効化
+  initializeGame(); // ゲームを初期化
 });
 </script>
 </body>
